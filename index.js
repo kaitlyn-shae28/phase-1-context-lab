@@ -15,7 +15,6 @@ const allWagesFor = function () {
     const payable = eligibleDates.reduce(function (memo, d) {
         return memo + wagesEarnedOnDate.call(this, d)
     }.bind(this), 0) // <== Hm, why did we need to add bind() there? We'll discuss soon!
-
     return payable
 }
 
@@ -63,18 +62,29 @@ function createTimeInEvent(dateStamp) {
   function hoursWorkedOnDate(date){
     const timeInEvent = this.timeInEvents.find(event => event.date === date);
     const timeOutEvent = this.timeOutEvents.find(event => event.date === date);
-  
     const timeInHour = timeInEvent.hour;
     const timeOutHour = timeOutEvent.hour;
-  
     const hoursWorked = timeOutHour - timeInHour;
-  
-    return hoursWorked/100
+    return hoursWorked/100;
   }
 
-  function wagesEarnedOnDate(employeeRecord, date){
-    const hoursWorked = hoursWorkedOnDate(employeeRecord, date);
-    const payRate = employeeRecord.payPerHour;
-    const wagesEarned = hoursWorked * payRate;
+  function wagesEarnedOnDate(date){
+    const hoursWorked = hoursWorkedOnDate.call(this, date);
+    const wagesEarned = hoursWorked * this.payPerHour;
     return wagesEarned;
+  }
+
+  function findEmployeeByFirstName(srcArray, firstName){
+    return srcArray.find(employee => employee.firstName === firstName)
+  }
+
+  function calculatePayroll(employeeRecords) {
+    const totalPayroll = employeeRecords.reduce((sum, employeeRecord) => {
+      const totalWages = employeeRecord.timeInEvents.reduce((wagesSum, timeInEvent) => {
+        const wages = wagesEarnedOnDate.call(employeeRecord, timeInEvent.date);
+        return wagesSum + wages;
+      }, 0);
+      return sum + totalWages;
+    }, 0);
+    return totalPayroll;
   }
